@@ -1,5 +1,5 @@
 import PrimaryButton from '@/components/atoms/PrimaryButton';
-import { Beef, Milk, Leaf, PlusCircle, Salad, Sandwich } from 'lucide-react-native';
+import { Beef, Leaf, Milk, PlusCircle, Salad, Sandwich } from 'lucide-react-native';
 import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -33,7 +33,13 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ data, onAdd }) => {
   }, [data.type]);
 
   return (
-    <View style={[styles.card, { borderColor: data.accent || '#312E81' }]}>
+    <View style={[styles.card, { borderColor: data.accent || '#FF6347', borderRadius: 10, backgroundColor: '#FFF' }]}>
+      <View style={styles.headerRow}>
+        <View style={styles.iconBadge}>
+          <Icon color={data.accent || '#C4B5FD'} size={24} />
+        </View>
+        <Text style={{ fontWeight: 'bold', fontSize: 16 }}>{data.label}</Text>
+      </View>
       <View style={styles.headerRow}>
         <View style={styles.iconBadge}>
           <Icon color={data.accent || '#C4B5FD'} size={18} />

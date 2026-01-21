@@ -12,7 +12,7 @@ interface BurgerViewerProps {
 
 // Alturas de ingredientes para calcular el tamaño total
 const INGREDIENT_HEIGHTS: Record<string, number> = {
-  panInferior: 8,
+  panInferior: 10,
   carne: 4,
   queso: 2,
   tomate: 3,
@@ -21,14 +21,14 @@ const INGREDIENT_HEIGHTS: Record<string, number> = {
 };
 
 const BurgerViewer: React.FC<BurgerViewerProps> = ({ ingredients, cameraAngle = { x: 0.45, y: 0.6 }, allModelPaths = [] }) => {
-  const memoizedAngle = useMemo(() => cameraAngle, [cameraAngle]);
-
   // Calcular el tamaño total de la hamburguesa
   const burgerHeight = useMemo(() => {
     return ingredients.reduce((total, ingredient) => {
       return total + (INGREDIENT_HEIGHTS[ingredient.type] || 3);
     }, 0);
   }, [ingredients]);
+
+  const memoizedAngle = useMemo(() => cameraAngle, [cameraAngle]);
 
   // Calcular el centro vertical de la hamburguesa
   const burgerCenter = useMemo(() => burgerHeight / 2, [burgerHeight]);
@@ -68,6 +68,7 @@ const BurgerViewer: React.FC<BurgerViewerProps> = ({ ingredients, cameraAngle = 
         camera={{ position: [300, 50, 300], fov: 35, near: 0.1, far: 10000 }}
         style={styles.canvas}
         dpr={[1, 1.5]}
+        gl={{ debug: false }}
       >
         <ModelPreloader modelPaths={allModelPaths} />
         <CameraController />

@@ -22,10 +22,11 @@ const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
   layerCount,
 }) => {
   return (
-    <View style={styles.panel}>
+    <View style={[styles.panel, { backgroundColor: '#FFF', borderRadius: 10 }]}>
       <View style={styles.headerRow}>
         <View>
-          <Text style={styles.title}>Personaliza tu burger</Text>
+          <Text style={[styles.title, { color: '#FF6347' }]}>Personaliza tu burger</Text>
+
           <Text style={styles.subtitle}>Añade capas sin perder la vista 3D.</Text>
         </View>
         <View style={styles.totalBadge}>

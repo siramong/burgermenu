@@ -5,6 +5,7 @@ interface BurgerProps {
   ingredients: Array<{ type: string; modelPath: any; label?: string; price?: number }>;
 }
 
+
 // Alturas predeterminadas para cada ingrediente
 const INGREDIENT_HEIGHTS: Record<string, number> = {
   panInferior: 8,

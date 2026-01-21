@@ -1,11 +1,10 @@
 import { useGLTF } from '@react-three/drei/native';
 import React, { useEffect, useRef } from 'react';
-import * as THREE from 'three';
 import { Group } from 'three';
 
 // Definimos la interfaz para los resultados de GLTF
 interface GLTFResult {
-  scene: THREE.Group;
+  scene: Group;
 }
 
 // Definimos las props del componente
@@ -37,8 +36,8 @@ const Ingredient: React.FC<IngredientProps> = ({
     const clonedScene = scene.clone();
     
     // Configurar materiales
-    clonedScene.traverse((child) => {
-      if (child instanceof THREE.Mesh) {
+    clonedScene.traverse((child: any) => {
+      if (child.isMesh) {
         if (child.material) {
           child.material.envMapIntensity = 1;
         }
