@@ -4,11 +4,18 @@ import panInferior from '@/assets/models/ingredients/panInferior.glb';
 import panSuperior from '@/assets/models/ingredients/panSuperior.glb';
 import queso from '@/assets/models/ingredients/queso.glb';
 import tomate from '@/assets/models/ingredients/tomate.glb';
-import Burger from '@/components/Burger';
-import IngredientSelector from '@/components/IngredientSelector';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { useRef, useState } from 'react';
-import { View } from 'react-native';
+import BurgerViewer from '@/components/organisms/BurgerViewer';
+import ConfiguratorPanel from '@/components/organisms/ConfiguratorPanel';
+import { useMemo, useState } from 'react';
+import { ScrollView, StatusBar, StyleSheet, View, useWindowDimensions } from 'react-native';
+
+type IngredientCatalogEntry = {
+  type: string;
+  label: string;
+  price: number;
+  description?: string;
+  accent?: string;
+};
 
 const ingredientModels: Record<string, any> = {
   panInferior,
@@ -20,59 +27,138 @@ const ingredientModels: Record<string, any> = {
 };
 
 const Index = () => {
-  const [ingredients, setIngredients] = useState<Array<{ type: string; modelPath: any }>>([
-    { type: 'panInferior', modelPath: panInferior },
+  const { width } = useWindowDimensions();
+  const isWide = width >= 900;
+
+  const catalog: IngredientCatalogEntry[] = [
+    {
+      type: 'panInferior',
+      label: 'Pan inferior',
+      price: 1.5,
+      description: 'Soporte brioche tostado',
+      accent: '#F59E0B',
+    },
+    { type: 'carne', label: 'Carne', price: 3.0, description: '180g sellada a la plancha', accent: '#DC2626' },
+    { type: 'queso', label: 'Queso', price: 1.1, description: 'Cheddar fundido', accent: '#FBBF24' },
+    { type: 'tomate', label: 'Tomate', price: 0.8, description: 'Rodajas frescas', accent: '#EF4444' },
+    { type: 'lechuga', label: 'Lechuga', price: 0.7, description: 'Crujiente y verde', accent: '#22C55E' },
+    { type: 'panSuperior', label: 'Pan superior', price: 1.5, description: 'Corona de ajonjolí', accent: '#F59E0B' },
+  ];
+
+  const [selectedIngredients, setSelectedIngredients] = useState<Array<
+    IngredientCatalogEntry & { id: string; modelPath: any }
+  >>([
+    {
+      id: 'panInferior-base',
+      type: 'panInferior',
+      label: 'Pan inferior',
+      price: 1.5,
+      description: 'Soporte brioche tostado',
+      accent: '#F59E0B',
+      modelPath: panInferior,
+    },
   ]);
-  const [cameraAngle, setCameraAngle] = useState({ x: 0.5, y: 0.5 });
-  const cameraRef = useRef<any>(null);
 
   const handleAddIngredient = (type: string) => {
-    setIngredients([...ingredients, { type, modelPath: ingredientModels[type] }]);
+    const meta = catalog.find((item) => item.type === type);
+    if (!meta) return;
+
+    const newItem = {
+      ...meta,
+      id: `${type}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      modelPath: ingredientModels[type],
+    };
+
+    setSelectedIngredients((prev) => [...prev, newItem]);
   };
 
   const handleRemoveIngredient = () => {
-    if (ingredients.length > 1) {
-      setIngredients(ingredients.slice(0, -1));
-    }
-  };
-
-  const CameraController = () => {
-    useFrame(({ camera }) => {
-      const distance = 400;
-      const x = distance * Math.sin(cameraAngle.y) * Math.cos(cameraAngle.x);
-      const y = distance * Math.sin(cameraAngle.x) + 50;
-      const z = distance * Math.cos(cameraAngle.y) * Math.cos(cameraAngle.x);
-
-      camera.position.set(x, y, z);
-      camera.lookAt(0, 50, 0);
+    setSelectedIngredients((prev) => {
+      if (prev.length <= 1) return prev;
+      const clone = [...prev];
+      clone.pop();
+      return clone;
     });
-    return null;
   };
+
+  const viewerIngredients = useMemo(
+    () => selectedIngredients.map(({ type, modelPath }) => ({ type, modelPath })),
+    [selectedIngredients]
+  );
 
   return (
-    <View style={{ flex: 1 }}>
-      <Canvas
-        camera={{ position: [300, 50, 300], fov: 35, near: 0.1, far: 10000 }}
-        style={{ height: '100vh', background: '#202020' }}
-        dpr={[1, 1.5]}
+    <View style={styles.root}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.backgroundGlow} />
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={[styles.page, { flexDirection: isWide ? 'row' : 'column' }]}
       >
-        <CameraController />
-        <Burger ingredients={ingredients} />
+        <View
+          style={[
+            styles.viewerColumn,
+            isWide ? styles.viewerWide : styles.viewerNarrow,
+          ]}
+        >
+          <BurgerViewer ingredients={viewerIngredients} />
+        </View>
 
-        <directionalLight
-          position={[10, 15, 10]}
-          intensity={1}
-        />
-
-        <ambientLight intensity={0.6} />
-      </Canvas>
-
-      <IngredientSelector
-        onAddIngredient={handleAddIngredient}
-        onRemoveIngredient={handleRemoveIngredient}
-      />
+        <View style={[styles.panelColumn, isWide ? styles.panelWide : styles.panelNarrow]}>
+          <ConfiguratorPanel
+            catalog={catalog}
+            selectedIngredients={selectedIngredients}
+            onAdd={handleAddIngredient}
+            onRemove={handleRemoveIngredient}
+          />
+        </View>
+      </ScrollView>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#050711',
+  },
+  backgroundGlow: {
+    position: 'absolute',
+    top: -160,
+    left: -120,
+    width: 380,
+    height: 380,
+    backgroundColor: '#7C3AED',
+    opacity: 0.12,
+    borderRadius: 300,
+  },
+  page: {
+    flexGrow: 1,
+    padding: 16,
+    gap: 16,
+    alignItems: 'stretch',
+  },
+  viewerColumn: {
+    flex: 1,
+    minWidth: 320,
+    borderRadius: 24,
+    overflow: 'hidden',
+  },
+  viewerWide: {
+    minHeight: 520,
+  },
+  viewerNarrow: {
+    minHeight: 380,
+  },
+  panelColumn: {
+    flex: 1,
+    minWidth: 320,
+  },
+  panelWide: {
+    maxWidth: 460,
+  },
+  panelNarrow: {
+    width: '100%',
+  },
+});
 
 export default Index;

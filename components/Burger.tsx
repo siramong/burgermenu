@@ -2,7 +2,7 @@ import Ingredient from '@/components/Ingredient';
 import React, { useMemo } from 'react';
 
 interface BurgerProps {
-  ingredients: Array<{ type: string; modelPath: any }>;
+  ingredients: Array<{ type: string; modelPath: any; label?: string; price?: number }>;
 }
 
 // Alturas predeterminadas para cada ingrediente
