@@ -1,42 +1,56 @@
 import PrimaryButton from '@/components/atoms/PrimaryButton';
 import IngredientCard, { IngredientMeta } from '@/components/molecules/IngredientCard';
-import React, { useMemo } from 'react';
+import { ArrowRightCircle, Layers, Receipt, Trash2 } from 'lucide-react-native';
+import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-
-interface SelectedIngredient extends IngredientMeta {
-  id: string;
-}
 
 interface ConfiguratorPanelProps {
   catalog: IngredientMeta[];
-  selectedIngredients: SelectedIngredient[];
   onAdd: (type: string) => void;
   onRemove: () => void;
+  onCheckout: () => void;
+  totals: { total: number; extras: number };
+  layerCount: number;
 }
 
 const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
   catalog,
-  selectedIngredients,
   onAdd,
   onRemove,
+  onCheckout,
+  totals,
+  layerCount,
 }) => {
-  const total = useMemo(
-    () => selectedIngredients
-      .filter(item => item.id !== 'panInferior-base' && item.id !== 'panSuperior-base')
-      .reduce((acc, item) => acc + (item.price || 0), 0),
-    [selectedIngredients]
-  );
-
   return (
     <View style={styles.panel}>
       <View style={styles.headerRow}>
         <View>
-          <Text style={styles.title}>Arma tu burger</Text>
-          <Text style={styles.subtitle}>Añade capas, revisa el total y paga en un toque.</Text>
+          <Text style={styles.title}>Personaliza tu burger</Text>
+          <Text style={styles.subtitle}>Añade capas sin perder la vista 3D.</Text>
         </View>
         <View style={styles.totalBadge}>
-          <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
+          <Receipt color="#FDE68A" size={16} />
+          <View>
+            <Text style={styles.totalLabel}>Total</Text>
+            <Text style={styles.totalValue}>${totals.total.toFixed(2)}</Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={styles.metricsRow}>
+        <View style={styles.metricBox}>
+          <Layers color="#C4B5FD" size={18} />
+          <View>
+            <Text style={styles.metricLabel}>Capas activas</Text>
+            <Text style={styles.metricValue}>{layerCount}</Text>
+          </View>
+        </View>
+        <View style={styles.metricBox}>
+          <Receipt color="#FDE68A" size={18} />
+          <View>
+            <Text style={styles.metricLabel}>Extras</Text>
+            <Text style={styles.metricValue}>${totals.extras.toFixed(2)}</Text>
+          </View>
         </View>
       </View>
 
@@ -48,34 +62,21 @@ const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
           ))}
       </View>
 
-      <View style={styles.selectedBox}>
-        <Text style={styles.selectedTitle}>Tu pila</Text>
-        {selectedIngredients.length === 0 ? (
-          <Text style={styles.empty}>Todavía no agregas ingredientes.</Text>
-        ) : (
-          <View style={styles.selectedList}>
-            {selectedIngredients.map((ingredient) => (
-              <View key={ingredient.id} style={styles.selectedRow}>
-                <Text style={styles.selectedName}>{ingredient.label}</Text>
-                <Text style={styles.selectedPrice}>${ingredient.price.toFixed(2)}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-        <View style={styles.actionsRow}>
-          <PrimaryButton
-            label="Quitar última capa"
-            onPress={onRemove}
-            variant="ghost"
-            disabled={selectedIngredients.length <= 2}
-            style={{ flex: 1 }}
-          />
-          <PrimaryButton
-            label={`Pagar $${total.toFixed(2)}`}
-            onPress={() => {}}
-            style={{ flex: 1, marginLeft: 12 }}
-          />
-        </View>
+      <View style={styles.actionsRow}>
+        <PrimaryButton
+          label="Quitar última capa"
+          onPress={onRemove}
+          variant="ghost"
+          disabled={layerCount <= 2}
+          leftIcon={<Trash2 color="#E5E7EB" size={18} />}
+          style={{ flex: 1 }}
+        />
+        <PrimaryButton
+          label="Ir a facturación"
+          onPress={onCheckout}
+          leftIcon={<ArrowRightCircle color="#0B1021" size={18} />}
+          style={{ flex: 1, marginLeft: 12 }}
+        />
       </View>
     </View>
   );
@@ -83,7 +84,7 @@ const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
 
 const styles = StyleSheet.create({
   panel: {
-    backgroundColor: 'rgba(10,10,22,0.8)',
+    backgroundColor: 'rgba(10,10,22,0.85)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.08)',
     padding: 18,
@@ -106,13 +107,15 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   totalBadge: {
+    flexDirection: 'row',
+    gap: 10,
     backgroundColor: 'rgba(124, 58, 237, 0.15)',
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(124,58,237,0.35)',
-    alignItems: 'flex-end',
+    alignItems: 'center',
   },
   totalLabel: {
     color: '#D8B4FE',
@@ -123,51 +126,40 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '800',
   },
+  metricsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  metricBox: {
+    flex: 1,
+    minWidth: 140,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 14,
+    padding: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  metricLabel: {
+    color: '#9CA3AF',
+    fontSize: 12,
+  },
+  metricValue: {
+    color: '#F9FAFB',
+    fontSize: 18,
+    fontWeight: '800',
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
   },
-  selectedBox: {
-    backgroundColor: 'rgba(255,255,255,0.02)',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-  },
-  selectedTitle: {
-    color: '#E5E7EB',
-    fontSize: 14,
-    fontWeight: '700',
-    marginBottom: 10,
-  },
-  empty: {
-    color: '#6B7280',
-    fontSize: 12,
-  },
-  selectedList: {
-    gap: 8,
-  },
-  selectedRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 6,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.06)',
-  },
-  selectedName: {
-    color: '#F9FAFB',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  selectedPrice: {
-    color: '#C4B5FD',
-    fontWeight: '700',
-  },
   actionsRow: {
     flexDirection: 'row',
-    marginTop: 12,
+    marginTop: 4,
   },
 });
 

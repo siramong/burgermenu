@@ -1,5 +1,6 @@
 import PrimaryButton from '@/components/atoms/PrimaryButton';
-import React from 'react';
+import { Beef, Milk, Leaf, PlusCircle, Salad, Sandwich } from 'lucide-react-native';
+import React, { useMemo } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 export interface IngredientMeta {
@@ -16,10 +17,28 @@ interface IngredientCardProps {
 }
 
 const IngredientCard: React.FC<IngredientCardProps> = ({ data, onAdd }) => {
+  const Icon = useMemo(() => {
+    switch (data.type) {
+      case 'carne':
+        return Beef;
+      case 'queso':
+        return Milk;
+      case 'tomate':
+        return Salad;
+      case 'lechuga':
+        return Leaf;
+      default:
+        return Sandwich;
+    }
+  }, [data.type]);
+
   return (
     <View style={[styles.card, { borderColor: data.accent || '#312E81' }]}>
       <View style={styles.headerRow}>
-        <View>
+        <View style={styles.iconBadge}>
+          <Icon color={data.accent || '#C4B5FD'} size={18} />
+        </View>
+        <View style={{ flex: 1 }}>
           <Text style={styles.label}>{data.label}</Text>
           {data.description ? <Text style={styles.description}>{data.description}</Text> : null}
         </View>
@@ -31,6 +50,7 @@ const IngredientCard: React.FC<IngredientCardProps> = ({ data, onAdd }) => {
         label="Agregar"
         onPress={() => onAdd(data.type)}
         variant="ghost"
+        leftIcon={<PlusCircle color="#E5E7EB" size={16} />}
         style={{ marginTop: 12 }}
       />
     </View>
@@ -48,9 +68,19 @@ const styles = StyleSheet.create({
   },
   headerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    alignItems: 'center',
     gap: 12,
+  },
+  iconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
   },
   label: {
     color: '#F3F4F6',

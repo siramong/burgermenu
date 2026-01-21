@@ -1,5 +1,5 @@
-import React from 'react';
-import { GestureResponderEvent, StyleSheet, Text, TouchableOpacity, ViewStyle } from 'react-native';
+import React, { ReactElement } from 'react';
+import { GestureResponderEvent, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 
 interface PrimaryButtonProps {
   label: string;
@@ -7,6 +7,7 @@ interface PrimaryButtonProps {
   variant?: 'primary' | 'ghost';
   disabled?: boolean;
   style?: ViewStyle;
+  leftIcon?: ReactElement;
 }
 
 const PrimaryButton: React.FC<PrimaryButtonProps> = ({
@@ -15,6 +16,7 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   variant = 'primary',
   disabled = false,
   style,
+  leftIcon,
 }) => {
   const isGhost = variant === 'ghost';
 
@@ -31,7 +33,10 @@ const PrimaryButton: React.FC<PrimaryButtonProps> = ({
       onPress={onPress}
       disabled={disabled}
     >
-      <Text style={[styles.label, isGhost ? styles.ghostLabel : undefined]}>{label}</Text>
+      <View style={styles.content}>
+        {leftIcon ? <View style={styles.icon}>{leftIcon}</View> : null}
+        <Text style={[styles.label, isGhost ? styles.ghostLabel : undefined]}>{label}</Text>
+      </View>
     </TouchableOpacity>
   );
 };
@@ -41,6 +46,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  icon: {
     alignItems: 'center',
     justifyContent: 'center',
   },
