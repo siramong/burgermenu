@@ -21,7 +21,9 @@ const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
   onRemove,
 }) => {
   const total = useMemo(
-    () => selectedIngredients.reduce((acc, item) => acc + (item.price || 0), 0),
+    () => selectedIngredients
+      .filter(item => item.id !== 'panInferior-base' && item.id !== 'panSuperior-base')
+      .reduce((acc, item) => acc + (item.price || 0), 0),
     [selectedIngredients]
   );
 
@@ -39,9 +41,11 @@ const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
       </View>
 
       <View style={styles.grid}>
-        {catalog.map((item) => (
-          <IngredientCard key={item.type} data={item} onAdd={onAdd} />
-        ))}
+        {catalog
+          .filter((item) => item.type !== 'panInferior' && item.type !== 'panSuperior')
+          .map((item) => (
+            <IngredientCard key={item.type} data={item} onAdd={onAdd} />
+          ))}
       </View>
 
       <View style={styles.selectedBox}>
@@ -63,7 +67,7 @@ const ConfiguratorPanel: React.FC<ConfiguratorPanelProps> = ({
             label="Quitar última capa"
             onPress={onRemove}
             variant="ghost"
-            disabled={selectedIngredients.length <= 1}
+            disabled={selectedIngredients.length <= 2}
             style={{ flex: 1 }}
           />
           <PrimaryButton

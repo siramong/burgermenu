@@ -31,18 +31,10 @@ const Index = () => {
   const isWide = width >= 900;
 
   const catalog: IngredientCatalogEntry[] = [
-    {
-      type: 'panInferior',
-      label: 'Pan inferior',
-      price: 1.5,
-      description: 'Soporte brioche tostado',
-      accent: '#F59E0B',
-    },
     { type: 'carne', label: 'Carne', price: 3.0, description: '180g sellada a la plancha', accent: '#DC2626' },
     { type: 'queso', label: 'Queso', price: 1.1, description: 'Cheddar fundido', accent: '#FBBF24' },
     { type: 'tomate', label: 'Tomate', price: 0.8, description: 'Rodajas frescas', accent: '#EF4444' },
     { type: 'lechuga', label: 'Lechuga', price: 0.7, description: 'Crujiente y verde', accent: '#22C55E' },
-    { type: 'panSuperior', label: 'Pan superior', price: 1.5, description: 'Corona de ajonjolí', accent: '#F59E0B' },
   ];
 
   const [selectedIngredients, setSelectedIngredients] = useState<Array<
@@ -57,6 +49,15 @@ const Index = () => {
       accent: '#F59E0B',
       modelPath: panInferior,
     },
+    {
+      id: 'panSuperior-base',
+      type: 'panSuperior',
+      label: 'Pan superior',
+      price: 1.5,
+      description: 'Corona de ajonjolí',
+      accent: '#F59E0B',
+      modelPath: panSuperior,
+    },
   ]);
 
   const handleAddIngredient = (type: string) => {
@@ -69,14 +70,49 @@ const Index = () => {
       modelPath: ingredientModels[type],
     };
 
-    setSelectedIngredients((prev) => [...prev, newItem]);
+    setSelectedIngredients((prev) => {
+      // Si agregamos pan superior, asegurarnos que esté al final
+      if (type === 'panSuperior') {
+        // Quitar cualquier pan superior existente que no sea el base
+        const filtered = prev.filter(item => item.type !== 'panSuperior' || item.id === 'panSuperior-base');
+        // Si el base existe, reemplazarlo; si no, agregarlo al final
+        const hasBaseSuperior = filtered.some(item => item.id === 'panSuperior-base');
+        if (hasBaseSuperior) {
+          return filtered.map(item => 
+            item.id === 'panSuperior-base' ? newItem : item
+          );
+        }
+        return [...filtered, newItem];
+      }
+      // Para otros ingredientes, insertar antes del pan superior
+      const superiorIndex = prev.findIndex(item => item.type === 'panSuperior');
+      if (superiorIndex !== -1) {
+        const newList = [...prev];
+        newList.splice(superiorIndex, 0, newItem);
+        return newList;
+      }
+      return [...prev, newItem];
+    });
   };
 
   const handleRemoveIngredient = () => {
     setSelectedIngredients((prev) => {
-      if (prev.length <= 1) return prev;
+      // No permitir quitar si solo quedan los panes
+      if (prev.length <= 2) return prev;
+      
+      // Buscar el último elemento que no sea un pan base
+      let removeIndex = -1;
+      for (let i = prev.length - 1; i >= 0; i--) {
+        if (prev[i].id !== 'panInferior-base' && prev[i].id !== 'panSuperior-base') {
+          removeIndex = i;
+          break;
+        }
+      }
+      
+      if (removeIndex === -1) return prev;
+      
       const clone = [...prev];
-      clone.pop();
+      clone.splice(removeIndex, 1);
       return clone;
     });
   };
@@ -85,6 +121,8 @@ const Index = () => {
     () => selectedIngredients.map(({ type, modelPath }) => ({ type, modelPath })),
     [selectedIngredients]
   );
+
+  const allModelPaths = useMemo(() => Object.values(ingredientModels), []);
 
   return (
     <View style={styles.root}>
@@ -100,7 +138,7 @@ const Index = () => {
             isWide ? styles.viewerWide : styles.viewerNarrow,
           ]}
         >
-          <BurgerViewer ingredients={viewerIngredients} />
+          <BurgerViewer ingredients={viewerIngredients} allModelPaths={allModelPaths} />
         </View>
 
         <View style={[styles.panelColumn, isWide ? styles.panelWide : styles.panelNarrow]}>

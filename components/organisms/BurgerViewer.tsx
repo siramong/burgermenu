@@ -1,25 +1,62 @@
 import Burger from '@/components/Burger';
+import ModelPreloader from '@/components/ModelPreloader';
 import { Canvas, useFrame } from '@react-three/fiber';
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 interface BurgerViewerProps {
   ingredients: Array<{ type: string; modelPath: any }>;
   cameraAngle?: { x: number; y: number };
+  allModelPaths?: any[];
 }
 
-const BurgerViewer: React.FC<BurgerViewerProps> = ({ ingredients, cameraAngle = { x: 0.45, y: 0.6 } }) => {
+// Alturas de ingredientes para calcular el tamaño total
+const INGREDIENT_HEIGHTS: Record<string, number> = {
+  panInferior: 8,
+  carne: 4,
+  queso: 2,
+  tomate: 3,
+  lechuga: 5,
+  panSuperior: 8,
+};
+
+const BurgerViewer: React.FC<BurgerViewerProps> = ({ ingredients, cameraAngle = { x: 0.45, y: 0.6 }, allModelPaths = [] }) => {
   const memoizedAngle = useMemo(() => cameraAngle, [cameraAngle]);
 
+  // Calcular el tamaño total de la hamburguesa
+  const burgerHeight = useMemo(() => {
+    return ingredients.reduce((total, ingredient) => {
+      return total + (INGREDIENT_HEIGHTS[ingredient.type] || 3);
+    }, 0);
+  }, [ingredients]);
+
+  // Calcular el centro vertical de la hamburguesa
+  const burgerCenter = useMemo(() => burgerHeight / 2, [burgerHeight]);
+
+  // Calcular distancia de cámara basada en el tamaño (más ingredientes = más lejos)
+  const cameraDistance = useMemo(() => {
+    const baseDistance = 420;
+    const scaleFactor = Math.max(1, burgerHeight / 50); // Ajustar según el tamaño
+    return baseDistance * scaleFactor;
+  }, [burgerHeight]);
+
   const CameraController = () => {
-    useFrame(({ camera }) => {
-      const distance = 420;
-      const x = distance * Math.sin(memoizedAngle.y) * Math.cos(memoizedAngle.x);
-      const y = distance * Math.sin(memoizedAngle.x) + 60;
-      const z = distance * Math.cos(memoizedAngle.y) * Math.cos(memoizedAngle.x);
+    const orbitAngleRef = useRef(0);
+
+    useFrame(({ camera }, delta) => {
+      // Animación de órbita automática
+      orbitAngleRef.current += delta * 0.2; // Velocidad de rotación
+
+      const angle = orbitAngleRef.current;
+      const distance = cameraDistance;
+      
+      // Posición de la cámara en órbita alrededor del centro de la hamburguesa
+      const x = distance * Math.sin(angle) * Math.cos(memoizedAngle.x);
+      const y = distance * Math.sin(memoizedAngle.x) + burgerCenter;
+      const z = distance * Math.cos(angle) * Math.cos(memoizedAngle.x);
 
       camera.position.set(x, y, z);
-      camera.lookAt(0, 50, 0);
+      camera.lookAt(0, burgerCenter, 0); // Mirar al centro de la hamburguesa
     });
     return null;
   };
@@ -32,6 +69,7 @@ const BurgerViewer: React.FC<BurgerViewerProps> = ({ ingredients, cameraAngle = 
         style={styles.canvas}
         dpr={[1, 1.5]}
       >
+        <ModelPreloader modelPaths={allModelPaths} />
         <CameraController />
         <Burger ingredients={ingredients} />
         <directionalLight position={[10, 20, 10]} intensity={1} />
