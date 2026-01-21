@@ -1,6 +1,7 @@
-import React, { useLayoutEffect } from 'react';
 import { useGLTF } from '@react-three/drei/native';
+import React, { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { Group } from 'three';
 
 // Definimos la interfaz para los resultados de GLTF
 interface GLTFResult {
@@ -9,7 +10,7 @@ interface GLTFResult {
 
 // Definimos las props del componente
 interface IngredientProps {
-  modelPath: string | any; // 'any' para soportar require() de assets locales en Expo
+  modelPath: string | any;
   position?: [number, number, number];
   scale?: number;
   rotation?: [number, number, number];
@@ -19,32 +20,41 @@ const Ingredient: React.FC<IngredientProps> = ({
   modelPath, 
   position = [0, 0, 0], 
   scale = 1, 
-  rotation = [0, 0, 0] 
+  rotation = [0, 0, 0],
 }) => {
-  // Cargamos el modelo dinámicamente según la prop modelPath
   const { scene } = useGLTF(modelPath) as unknown as GLTFResult;
+  const groupRef = useRef<Group>(null);
 
-  useLayoutEffect(() => {
-    // Clonamos la escena si planeas usar el mismo ingrediente varias veces 
-    // al mismo tiempo para evitar conflictos de referencia.
-    scene.traverse((child) => {
+  useEffect(() => {
+    if (!groupRef.current) return;
+
+    // Limpiar el grupo
+    while (groupRef.current.children.length > 0) {
+      groupRef.current.children[0].removeFromParent();
+    }
+
+    // Clonar la escena
+    const clonedScene = scene.clone();
+    
+    // Configurar materiales
+    clonedScene.traverse((child) => {
       if (child instanceof THREE.Mesh) {
-        child.castShadow = true;
-        child.receiveShadow = true;
-        
         if (child.material) {
           child.material.envMapIntensity = 1;
         }
       }
     });
+
+    // Agregar al grupo
+    groupRef.current.add(clonedScene);
   }, [scene]);
 
   return (
-    <primitive 
-      object={scene} 
-      position={position} 
-      scale={scale} 
-      rotation={rotation} 
+    <group
+      ref={groupRef}
+      position={position}
+      scale={scale}
+      rotation={rotation}
     />
   );
 };
